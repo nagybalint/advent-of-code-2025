@@ -10,7 +10,7 @@ import (
 
 type Task interface {
 	GetName() string
-	Run() int32
+	Run() int
 }
 
 var taskRegistry = map[string]map[string]func() Task{
