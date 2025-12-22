@@ -15,7 +15,7 @@ func (*Day1Task1) GetName() string {
 }
 
 func getTurns() ([]int, error) {
-	path := "assets/personal-inputs/day1/task1.txt"
+	path := "assets/personal-inputs/day1.txt"
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("can't open %s, error: %s", path, err)
