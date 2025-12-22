@@ -29,4 +29,8 @@ go.work.sum
 
 # Editor/IDE
 # .idea/
-# .vscode/
+.vscode/
+
+# Personal inputs that should be kept out of the repo
+aoc25
+/assets/personal-inputs
