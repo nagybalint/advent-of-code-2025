@@ -16,16 +16,10 @@ type Bank struct {
 
 func (b Bank) Joltage() (int, error) {
 	if len(b.batteries) < 2 {
-		return -1, fmt.Errorf("invalid bank (expected at least 2 batteries): %s", b)
+		return 0, fmt.Errorf("invalid bank (expected at least 2 batteries): %s", b)
 	}
-	firstIdx, firstVal, err := max(b.batteries[:len(b.batteries)-1])
-	if err != nil {
-		return -1, fmt.Errorf("can't find first value, error: %s", err)
-	}
-	_, lastVal, err := max(b.batteries[firstIdx+1:])
-	if err != nil {
-		return -1, fmt.Errorf("can't find last value, error: %s", err)
-	}
+	firstIdx, firstVal := max(b.batteries[:len(b.batteries)-1])
+	_, lastVal := max(b.batteries[firstIdx+1:])
 	return firstVal*10 + lastVal, nil
 }
 
@@ -36,10 +30,7 @@ func helper(batteries []int, digits int) ([]int, error) {
 	if digits == 0 {
 		return nil, fmt.Errorf("unexpected state")
 	}
-	idxForNth, valForNth, err := max(batteries[:len(batteries)-digits+1])
-	if err != nil {
-		return nil, err
-	}
+	idxForNth, valForNth := max(batteries[:len(batteries)-digits+1])
 	if digits == 1 {
 		return []int{valForNth}, nil
 	}
@@ -52,17 +43,17 @@ func helper(batteries []int, digits int) ([]int, error) {
 
 func (b Bank) LargeJoltage() (int, error) {
 	if len(b.batteries) < 12 {
-		return -1, fmt.Errorf("invalid bank (expected at least 12 batteries for large joltage): %s", b)
+		return 0, fmt.Errorf("invalid bank (expected at least 12 batteries for large joltage): %s", b)
 	}
-	if joltage, err := helper(b.batteries, 12); err != nil {
-		return -1, err
-	} else {
-		acc := 0
-		for i := len(joltage) - 1; i >= 0; i-- {
-			acc = acc * 10 + joltage[i]
-		}
-		return acc, nil
+	joltage, err := helper(b.batteries, 12)
+	if err != nil {
+		return 0, err
 	}
+	acc := 0
+	for i := len(joltage) - 1; i >= 0; i-- {
+		acc = acc*10 + joltage[i]
+	}
+	return acc, nil
 }
 
 func (b Bank) String() string {
@@ -75,22 +66,19 @@ func (b Bank) String() string {
 	return sb.String()
 }
 
-func BankFromString(s string) (*Bank, error) {
+func BankFromString(s string) (Bank, error) {
 	b := Bank{batteries: make([]int, len(s))}
-	for idx, r := range s {
-		i := int(r - '0')
-		if i < 0 || i > 9 {
-			return nil, fmt.Errorf("expected single digit number for %c", r)
+	for i := 0; i < len(s); i++ {
+		n := int(s[i]) - int('0')
+		if n < 0 || n > 9 {
+			return Bank{}, fmt.Errorf("expected single digit number for %c", s[i])
 		}
-		b.batteries[idx] = i
+		b.batteries[i] = n
 	}
-	return &b, nil
+	return b, nil
 }
 
-func max(s []int) (int, int, error) {
-	if len(s) == 0 {
-		return -1, -1, fmt.Errorf("expected slice of positive length")
-	}
+func max(s []int) (int, int) {
 	maxVal := s[0]
 	maxIdx := 0
 	for idx, i := range s {
@@ -99,87 +87,77 @@ func max(s []int) (int, int, error) {
 			maxIdx = idx
 		}
 	}
-	return maxIdx, maxVal, nil
+	return maxIdx, maxVal
+}
+
+func readBanks() ([]Bank, error) {
+	path := "assets/personal-inputs/day3.txt"
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, fmt.Errorf("can't open %s, error: %w", path, err)
+	}
+
+	defer f.Close()
+
+	var banks []Bank
+
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		line := scanner.Text()
+		b, err := BankFromString(line)
+		if err != nil {
+			return nil, fmt.Errorf("can't parse bank from %s, error: %w", line, err)
+		}
+		banks = append(banks, b)
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("can't scan %s, error: %w", path, err)
+	}
+
+	return banks, nil
 }
 
 func (*Day3Task1) GetName() string {
 	return "day 3 task 1"
 }
 
-func (*Day3Task1) Run() int {
-	path := "assets/personal-inputs/day3.txt"
-	f, err := os.OpenFile(path, os.O_RDONLY, os.ModeCharDevice)
+func (*Day3Task1) Run() (int, error) {
+	banks, err := readBanks()
 	if err != nil {
-		panic(fmt.Sprintf("can't open %s, error: %s", path, err))
-	}
-
-	defer f.Close()
-
-	banks := make([]*Bank, 0)
-
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if b, err := BankFromString(line); err != nil {
-			panic(fmt.Sprintf("can't parse bank from %s, error: %s", line, err))
-		} else {
-			banks = append(banks, b)
-		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		panic(fmt.Sprintf("can't scan %s, error: %s", path, err))
+		return 0, fmt.Errorf("failed to read banks: %w", err)
 	}
 
 	acc := 0
 	for _, b := range banks {
-		if joltage, err := b.Joltage(); err != nil {
-			panic(fmt.Sprintf("can't calculate joltage for %s, error: %s", b, err))
-		} else {
-			acc += joltage
+		joltage, err := b.Joltage()
+		if err != nil {
+			return 0, fmt.Errorf("can't calculate joltage for %s, error: %w", b, err)
 		}
+		acc += joltage
 	}
 
-	return acc
+	return acc, nil
 }
 
 func (*Day3Task2) GetName() string {
 	return "day 3 task 2"
 }
 
-func (*Day3Task2) Run() int {
-	path := "assets/personal-inputs/day3.txt"
-	f, err := os.OpenFile(path, os.O_RDONLY, os.ModeCharDevice)
+func (*Day3Task2) Run() (int, error) {
+	banks, err := readBanks()
 	if err != nil {
-		panic(fmt.Sprintf("can't open %s, error: %s", path, err))
-	}
-
-	defer f.Close()
-
-	banks := make([]*Bank, 0)
-
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if b, err := BankFromString(line); err != nil {
-			panic(fmt.Sprintf("can't parse bank from %s, error: %s", line, err))
-		} else {
-			banks = append(banks, b)
-		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		panic(fmt.Sprintf("can't scan %s, error: %s", path, err))
+		return 0, fmt.Errorf("failed to read banks")
 	}
 
 	acc := 0
 	for _, b := range banks {
-		if joltage, err := b.LargeJoltage(); err != nil {
-			panic(fmt.Sprintf("can't calculate joltage for %s, error: %s", b, err))
-		} else {
-			acc += joltage
+		joltage, err := b.LargeJoltage()
+		if err != nil {
+			return 0, fmt.Errorf("can't calculate joltage for %s, error: %w", b, err)
 		}
+		acc += joltage
 	}
 
-	return acc
+	return acc, nil
 }

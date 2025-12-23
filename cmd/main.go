@@ -10,7 +10,7 @@ import (
 
 type Task interface {
 	GetName() string
-	Run() int
+	Run() (int, error)
 }
 
 var taskRegistry = map[string]map[string]func() Task{
@@ -37,11 +37,15 @@ func main() {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			taskC := taskRegistry[day][taskName]
 			task := taskC()
-			fmt.Printf("The result of task %s is %d \n", task.GetName(), task.Run())
+			if result, err := task.Run(); err != nil {
+				panic(fmt.Sprintf("Task %s failed with %s", task.GetName(), err))
+			} else {
+				fmt.Printf("The result of task %s is %d \n", task.GetName(), result)
+			}
 			return nil
 		},
 	}
-	cmd.PersistentFlags().StringVar(&day, "day", "d", "day selector")
-	cmd.PersistentFlags().StringVar(&taskName, "task", "t", "task selector")
+	cmd.PersistentFlags().StringVar(&day, "day", "1", "day selector")
+	cmd.PersistentFlags().StringVar(&taskName, "task", "1", "task selector")
 	cmd.Execute()
 }

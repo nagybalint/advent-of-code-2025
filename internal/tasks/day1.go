@@ -36,6 +36,8 @@ func getTurns() ([]int, error) {
 			turns = append(turns, -num)
 		case "R":
 			turns = append(turns, num)
+		default:
+			return nil, fmt.Errorf("unexpected input %s", dir)
 		}
 	}
 
@@ -45,10 +47,10 @@ func getTurns() ([]int, error) {
 	return turns, nil
 }
 
-func (*Day1Task1) Run() int {
+func (*Day1Task1) Run() (int, error) {
 	turns, err := getTurns()
 	if err != nil {
-		panic(fmt.Sprintf("error getting turns, error: %s", err))
+		return -1, fmt.Errorf("error getting turns, error: %s", err)
 	}
 	curr := 50
 	acc := 0
@@ -59,7 +61,7 @@ func (*Day1Task1) Run() int {
 		}
 	}
 
-	return acc
+	return acc, nil
 }
 
 func (*Day1Task2) GetName() string {
@@ -73,21 +75,21 @@ func absInt(x int) int {
 	return x
 }
 
-func (*Day1Task2) Run() int {
+func (*Day1Task2) Run() (int, error) {
 	turns, err := getTurns()
 	if err != nil {
-		panic(fmt.Sprintf("error getting turns, error: %s", err))
+		return -1, fmt.Errorf("error getting turns, error: %s", err)
 	}
 	curr := 50
 	acc := 0
 	for _, t := range turns {
 		acc += absInt(t) / 100
-		next := curr + t % 100
-		if curr != 0 && next <= 0 || next > 99 {
-			acc += 1
+		next := curr + t%100
+		if curr != 0 && (next <= 0 || next > 99) {
+			acc += 1 
 		}
 		curr = (next + 100) % 100
 	}
 
-	return acc
+	return acc, nil
 }

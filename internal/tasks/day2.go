@@ -58,11 +58,11 @@ func (r *Range) CountInvalid() int {
 	return acc
 }
 
-func (*Day2Task1) Run() int {
+func (*Day2Task1) Run() (int, error) {
 	path := "assets/personal-inputs/day2.txt"
 	b, err := os.ReadFile(path)
 	if err != nil {
-		panic(fmt.Sprintf("can't open %s, error: %s", path, err))
+		return -1, fmt.Errorf("can't open %s, error: %s", path, err)
 	}
 
 	s := string(b)
@@ -72,12 +72,12 @@ func (*Day2Task1) Run() int {
 	for _, raw := range rawRanges {
 		r, err := RangeFromString(raw)
 		if err != nil {
-			panic(fmt.Sprintf("can't parse range from %s, error: %s", raw, err))
+			return -1, fmt.Errorf("can't parse range from %s, error: %s", raw, err)
 		}
 		acc += r.CountInvalid()
 	}
 
-	return acc
+	return acc, nil
 }
 
 type Day2Task2 struct{}
@@ -86,11 +86,11 @@ func (*Day2Task2) GetName() string {
 	return "day 2 task 2"
 }
 
-func (*Day2Task2) Run() int {
+func (*Day2Task2) Run() (int, error) {
 	path := "assets/personal-inputs/day2.txt"
 	b, err := os.ReadFile(path)
 	if err != nil {
-		panic(fmt.Sprintf("can't open %s, error: %s", path, err))
+		return -1, fmt.Errorf("can't open %s, error: %s", path, err)
 	}
 
 	s := string(b)
@@ -100,12 +100,12 @@ func (*Day2Task2) Run() int {
 	for _, raw := range rawRanges {
 		r, err := RangeFromString(raw)
 		if err != nil {
-			panic(fmt.Sprintf("can't parse range from %s, error: %s", raw, err))
+			return -1, fmt.Errorf("can't parse range from %s, error: %s", raw, err)
 		}
 		acc += r.CountInvalidAny()
 	}
 
-	return acc
+	return acc, nil
 }
 
 var primeFactors = [11][]int{
@@ -128,10 +128,6 @@ func (r *Range) CountInvalidAny() int {
 	for i := r.b; i <= r.e; i++ {
 		s := strconv.Itoa(i)
 		l := len(s)
-
-		if l > len(primeFactors) {
-			panic("I need more prime factors")
-		}
 
 		primes := primeFactors[l]
 		if primes == nil {
