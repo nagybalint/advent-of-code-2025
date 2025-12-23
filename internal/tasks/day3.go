@@ -8,6 +8,7 @@ import (
 )
 
 type Day3Task1 struct{}
+type Day3Task2 struct{}
 
 type Bank struct {
 	batteries []int
@@ -26,6 +27,42 @@ func (b Bank) Joltage() (int, error) {
 		return -1, fmt.Errorf("can't find last value, error: %s", err)
 	}
 	return firstVal*10 + lastVal, nil
+}
+
+func helper(batteries []int, digits int) ([]int, error) {
+	if len(batteries) < digits {
+		return nil, fmt.Errorf("can't calculate %d digit joltage", digits)
+	}
+	if digits == 0 {
+		return nil, fmt.Errorf("unexpected state")
+	}
+	idxForNth, valForNth, err := max(batteries[:len(batteries)-digits+1])
+	if err != nil {
+		return nil, err
+	}
+	if digits == 1 {
+		return []int{valForNth}, nil
+	}
+	rest, err := helper(batteries[idxForNth+1:], digits-1)
+	if err != nil {
+		return nil, err
+	}
+	return append(rest, valForNth), nil
+}
+
+func (b Bank) LargeJoltage() (int, error) {
+	if len(b.batteries) < 12 {
+		return -1, fmt.Errorf("invalid bank (expected at least 12 batteries for large joltage): %s", b)
+	}
+	if joltage, err := helper(b.batteries, 12); err != nil {
+		return -1, err
+	} else {
+		acc := 0
+		for i := len(joltage) - 1; i >= 0; i-- {
+			acc = acc * 10 + joltage[i]
+		}
+		return acc, nil
+	}
 }
 
 func (b Bank) String() string {
@@ -97,6 +134,47 @@ func (*Day3Task1) Run() int {
 	acc := 0
 	for _, b := range banks {
 		if joltage, err := b.Joltage(); err != nil {
+			panic(fmt.Sprintf("can't calculate joltage for %s, error: %s", b, err))
+		} else {
+			acc += joltage
+		}
+	}
+
+	return acc
+}
+
+func (*Day3Task2) GetName() string {
+	return "day 3 task 2"
+}
+
+func (*Day3Task2) Run() int {
+	path := "assets/personal-inputs/day3.txt"
+	f, err := os.OpenFile(path, os.O_RDONLY, os.ModeCharDevice)
+	if err != nil {
+		panic(fmt.Sprintf("can't open %s, error: %s", path, err))
+	}
+
+	defer f.Close()
+
+	banks := make([]*Bank, 0)
+
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if b, err := BankFromString(line); err != nil {
+			panic(fmt.Sprintf("can't parse bank from %s, error: %s", line, err))
+		} else {
+			banks = append(banks, b)
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		panic(fmt.Sprintf("can't scan %s, error: %s", path, err))
+	}
+
+	acc := 0
+	for _, b := range banks {
+		if joltage, err := b.LargeJoltage(); err != nil {
 			panic(fmt.Sprintf("can't calculate joltage for %s, error: %s", b, err))
 		} else {
 			acc += joltage
