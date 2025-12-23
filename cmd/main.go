@@ -22,6 +22,9 @@ var taskRegistry = map[string]map[string]func() Task{
 		"1": func() Task { return &tasks.Day2Task1{} },
 		"2": func() Task { return &tasks.Day2Task2{} },
 	},
+	"3": {
+		"1": func() Task { return &tasks.Day3Task1{} },
+	},
 }
 
 func main() {
