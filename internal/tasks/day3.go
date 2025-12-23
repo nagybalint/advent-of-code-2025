@@ -18,8 +18,8 @@ func (b Bank) Joltage() (int, error) {
 	if len(b.batteries) < 2 {
 		return 0, fmt.Errorf("invalid bank (expected at least 2 batteries): %s", b)
 	}
-	firstIdx, firstVal := max(b.batteries[:len(b.batteries)-1])
-	_, lastVal := max(b.batteries[firstIdx+1:])
+	firstIdx, firstVal := maxIntSlice(b.batteries[:len(b.batteries)-1])
+	_, lastVal := maxIntSlice(b.batteries[firstIdx+1:])
 	return firstVal*10 + lastVal, nil
 }
 
@@ -30,7 +30,7 @@ func helper(batteries []int, digits int) ([]int, error) {
 	if digits == 0 {
 		return nil, fmt.Errorf("unexpected state")
 	}
-	idxForNth, valForNth := max(batteries[:len(batteries)-digits+1])
+	idxForNth, valForNth := maxIntSlice(batteries[:len(batteries)-digits+1])
 	if digits == 1 {
 		return []int{valForNth}, nil
 	}
@@ -78,7 +78,7 @@ func BankFromString(s string) (Bank, error) {
 	return b, nil
 }
 
-func max(s []int) (int, int) {
+func maxIntSlice(s []int) (int, int) {
 	maxVal := s[0]
 	maxIdx := 0
 	for idx, i := range s {
