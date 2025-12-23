@@ -45,8 +45,8 @@ func (r *Range) CountInvalid() int {
 	for i := r.b; i <= r.e; i++ {
 		s := strconv.Itoa(i)
 		l := len(s)
-		if l^2 == 1 {
-			// even digits, must be valid
+		if l&1 == 1 {
+			// odd digits, must be invalid
 			continue
 		}
 		start := s[:l/2]
@@ -75,6 +75,82 @@ func (*Day2Task1) Run() int {
 			panic(fmt.Sprintf("can't parse range from %s, error: %s", raw, err))
 		}
 		acc += r.CountInvalid()
+	}
+
+	return acc
+}
+
+type Day2Task2 struct{}
+
+func (*Day2Task2) GetName() string {
+	return "day 2 task 2"
+}
+
+func (*Day2Task2) Run() int {
+	path := "assets/personal-inputs/day2.txt"
+	b, err := os.ReadFile(path)
+	if err != nil {
+		panic(fmt.Sprintf("can't open %s, error: %s", path, err))
+	}
+
+	s := string(b)
+	rawRanges := strings.Split(strings.TrimSpace(s), ",")
+
+	acc := 0
+	for _, raw := range rawRanges {
+		r, err := RangeFromString(raw)
+		if err != nil {
+			panic(fmt.Sprintf("can't parse range from %s, error: %s", raw, err))
+		}
+		acc += r.CountInvalidAny()
+	}
+
+	return acc
+}
+
+var primeFactors = [11][]int{
+	0:  nil,
+	1:  nil,
+	2:  {1},
+	3:  {1},
+	4:  {1, 2},
+	5:  {1},
+	6:  {1, 2, 3},
+	7:  {1},
+	8:  {1, 2, 4},
+	9:  {1, 3},
+	10: {1, 2, 5},
+}
+
+func (r *Range) CountInvalidAny() int {
+	acc := 0
+
+	for i := r.b; i <= r.e; i++ {
+		s := strconv.Itoa(i)
+		l := len(s)
+
+		if l > len(primeFactors) {
+			panic("I need more prime factors")
+		}
+
+		primes := primeFactors[l]
+		if primes == nil {
+			continue
+		}
+
+		for _, p := range primes {
+			isInvalid := true
+			for idx := 0; idx < l-p; idx += p {
+				if s[idx:idx+p] != s[idx+p:idx+2*p] {
+					isInvalid = false
+					break
+				}
+			}
+			if isInvalid {
+				acc += i
+				break
+			}
+		}
 	}
 
 	return acc
